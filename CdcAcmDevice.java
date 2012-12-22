@@ -7,7 +7,6 @@ import java.io.IOException;
 import android.annotation.TargetApi;
 import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
-import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
 
@@ -23,13 +22,15 @@ public class CdcAcmDevice extends SerialDevice {
     private static final int USB_RECIP_INTERFACE = 0x01;
     private static final int USB_RT_ACM = UsbConstants.USB_TYPE_CLASS | USB_RECIP_INTERFACE;
 
-    public CdcAcmDevice(UsbDevice dev, UsbDeviceConnection conn) {
-        super(dev, conn);
+    public CdcAcmDevice(UsbDevice dev, SerialDeviceMgr mgr) {
+        super(dev, mgr);
     }
 
+    @Override
     public int getType() { return SerialDevice.TYPE_CDC_ACM; }
 
-    public void open() throws IOException {
+    @Override
+    protected void openDevice() throws IOException {
         if(m_dev.getInterfaceCount() < 2)
             throw new IOException("Couldn't open CDC ACM device: interface count is too low");
 
@@ -82,10 +83,11 @@ public class CdcAcmDevice extends SerialDevice {
         return m_conn.controlTransfer(USB_RT_ACM, request, value, 0, buf, buf != null ? buf.length : 0, 5000);
     }
 
-    public int read(byte[] dest, int timeoutMs) throws IOException {
+    @Override
+    public int read(byte[] dest, int offset, int timeoutMs) throws IOException {
         final int read;
         synchronized (m_readLock) {
-            int readAmt = Math.min(dest.length, m_readBuff.length);
+            int readAmt = Math.min(dest.length-offset, m_readBuff.length);
             read = m_conn.bulkTransfer(m_readEndpoint, m_readBuff, readAmt, timeoutMs);
             if (read < 0) {
                 // This sucks: we get -1 on timeout, not 0 as preferred.
@@ -94,11 +96,12 @@ public class CdcAcmDevice extends SerialDevice {
                 // in response :\ -- http://b.android.com/28023
                 return 0;
             }
-            System.arraycopy(m_readBuff, 0, dest, 0, read);
+            System.arraycopy(m_readBuff, 0, dest, offset, read);
         }
         return read;
     }
 
+    @Override
     public int write(byte[] src, int timeoutMs) throws IOException {
         int offset = 0;
 

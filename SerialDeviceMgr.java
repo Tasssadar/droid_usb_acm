@@ -9,7 +9,6 @@ import android.content.IntentFilter;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
-import android.util.Log;
 
 @TargetApi(12)
 public class SerialDeviceMgr {
@@ -17,7 +16,7 @@ public class SerialDeviceMgr {
     private static final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
 
     public interface SerialDeviceMgrListener {
-        boolean onNewDevice(SerialDevice dev);
+        void onNewDevice(SerialDevice dev);
     }
 
     public SerialDeviceMgr(SerialDeviceMgrListener listener, Context ctx) {
@@ -50,20 +49,15 @@ public class SerialDeviceMgr {
     }
 
     private void processRawDevice(UsbDevice usbdev) {
-        
-        UsbDeviceConnection conn = m_usbManager.openDevice(usbdev);
-        if(conn == null)
-            return;
-
-        SerialDevice dev = SerialDevice.create(usbdev, conn);
+        SerialDevice dev = SerialDevice.create(usbdev, this);
         if(dev == null)
-        {
-            conn.close();
             return;
-        }
 
-        if(!m_listener.onNewDevice(dev))
-            dev.closeUsbDevConn();
+        m_listener.onNewDevice(dev);
+    }
+    
+    public UsbDeviceConnection openDevConnection(UsbDevice dev) {
+        return m_usbManager.openDevice(dev);
     }
 
     private final BroadcastReceiver m_usbReceiver = new BroadcastReceiver() {
