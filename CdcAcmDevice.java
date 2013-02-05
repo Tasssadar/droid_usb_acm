@@ -50,7 +50,7 @@ public class CdcAcmDevice extends SerialDevice {
             throw new IOException("Couldn't open CDC ACM device: failed to claim data interface");
         }
 
-        m_ctrlEndpoint = m_ctrlInterface.getEndpoint(0);
+        //m_ctrlEndpoint = m_ctrlInterface.getEndpoint(0);
 
         m_writeEndpoint = m_dataInterface.getEndpoint(0);
         m_readEndpoint = m_dataInterface.getEndpoint(1);
@@ -156,7 +156,7 @@ public class CdcAcmDevice extends SerialDevice {
     private UsbInterface m_ctrlInterface;
     private UsbInterface m_dataInterface;
     
-    private UsbEndpoint m_ctrlEndpoint;
+    //private UsbEndpoint m_ctrlEndpoint;
     private UsbEndpoint m_readEndpoint;
     private UsbEndpoint m_writeEndpoint;
 }
